@@ -14,3 +14,16 @@ package-lock.json
 
 # Logs
 *.log
+
+# Project config (do not commit)
+.forceignore
+.prettierrc
+.prettierignore
+eslint.config.js
+jest.config.js
+package.json
+
+# Tooling / scripts
+config/
+scripts/
+.husky/
