@@ -1,0 +1,34 @@
+<template>
+  <lightning-modal-header label={headerLabel}></lightning-modal-header>
+  <lightning-modal-body>
+    <div class="slds-p-around_medium">
+      <lightning-record-edit-form
+        object-api-name={objName}
+        onsuccess={handleSuccess}
+        onerror={handleError}
+      >
+        <lightning-messages></lightning-messages>
+        <template for:each={fieldsToShow} for:item="fieldApiName">
+          <lightning-input-field
+            key={fieldApiName}
+            field-name={fieldApiName}
+          ></lightning-input-field>
+        </template>
+      </lightning-record-edit-form>
+    </div>
+  </lightning-modal-body>
+  <lightning-modal-footer>
+    <div class="slds-grid slds-grid_align-end slds-gap_small">
+      <lightning-button
+        variant="neutral"
+        label="Cancel"
+        onclick={handleCancel}
+      ></lightning-button>
+      <lightning-button
+        variant="brand"
+        label="Save"
+        onclick={handleSave}
+      ></lightning-button>
+    </div>
+  </lightning-modal-footer>
+</template>

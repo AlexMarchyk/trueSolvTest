@@ -1,0 +1,74 @@
+<template>
+  <div class="container slds-scrollable_y" style="max-height: 24rem">
+    <table class="slds-table slds-table_header-fixed">
+      <thead class="slds-color__background_gray-4 slds-is-fixed">
+        <tr>
+          <template for:each={columns} for:item="col">
+            <th key={col} scope="col">
+              <div class="slds-truncate slds-p-vertical_medium" title={col}>
+                {col}
+              </div>
+            </th>
+          </template>
+          <th scope="col" class="actions">
+            <div class="slds-truncate slds-text-align_right" title="Actions">
+              <span class="slds-assistive-text">Actions</span>
+              <lightning-button
+                onclick={handleCreateRecordClick}
+                label={actionButtonLabel}
+                icon-name="utility:add"
+                variant="neutral"
+              ></lightning-button>
+            </div>
+          </th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <template for:each={rows} for:item="row">
+          <tr key={row.id} data-record-id={row.id}>
+            <template for:each={row.cells} for:item="cell">
+              <td key={cell.key} class="slds-var-p-around_xx-small">
+                <template lwc:if={cell.isReadonly}>
+                  <div class="slds-truncate" title={cell.value}>
+                    {cell.value}
+                  </div>
+                </template>
+                <template lwc:else>
+                  <lightning-input
+                    name={cell.key}
+                    value={cell.value}
+                    type="text"
+                    variant="label-hidden"
+                    data-record-id={row.id}
+                    data-field-name={cell.key}
+                    onchange={handleCellChange}
+                  ></lightning-input>
+                </template>
+              </td>
+            </template>
+            <td class="slds-var-p-around_xx-small actions">
+              <lightning-button-icon
+                onclick={handleSaveClick}
+                class="action-save"
+                icon-name="utility:save"
+                alternative-text="Save"
+                variant="bare"
+                size="large"
+                disabled={row.isSaveDisabled}
+              ></lightning-button-icon>
+              <lightning-button-icon
+                onclick={handleDeleteClick}
+                class="action-delete"
+                icon-name="utility:delete"
+                alternative-text="Delete"
+                variant="bare"
+                size="large"
+              ></lightning-button-icon>
+            </td>
+          </tr>
+        </template>
+      </tbody>
+    </table>
+  </div>
+</template>

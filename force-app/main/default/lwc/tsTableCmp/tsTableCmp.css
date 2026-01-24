@@ -1,0 +1,25 @@
+.container {
+    max-height: 18.75rem;
+    overflow-y: auto;
+    scroll-behavior: smooth;
+}
+
+.actions,
+thead th.actions {
+    text-align: right;
+    white-space: nowrap;
+}
+
+.actions .slds-button_icon {
+    margin-left: var(--slds-g-sizing-2);
+}
+
+.action-delete {
+    --slds-c-icon-color-foreground: var(--slds-g-color-palette-red-50);
+}
+
+.container thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}

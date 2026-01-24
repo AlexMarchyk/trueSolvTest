@@ -1,0 +1,16 @@
+# Salesforce
+.sf/
+.sfdx/
+
+# Node
+node_modules/
+package-lock.json
+
+# VS Code
+.vscode/
+
+# OS
+.DS_Store
+
+# Logs
+*.log
