@@ -56,4 +56,13 @@ export default class TsMainCmp extends LightningElement {
     get isSearchDisabled() {
         return !this.searchValue || this.searchValue.length < 2;
     }
+
+    get getBgC() {
+        switch (this.objName) {
+            case "Account":
+                return "slds-theme_info";
+            default:
+                return "slds-theme_default";
+        }
+    }
 }

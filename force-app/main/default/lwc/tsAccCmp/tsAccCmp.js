@@ -5,11 +5,16 @@ import { ShowToastEvent } from "lightning/platformShowToastEvent";
 import { refreshApex } from "@salesforce/apex";
 import { NavigationMixin } from "lightning/navigation";
 import TsCreateModalCmp from "c/tsCreateModalCmp";
+import getExternalAccounts from "@salesforce/apex/TsExternalAccountService.getExternalAccounts";
+import updateExternalAccount from "@salesforce/apex/TsExternalAccountService.updateExternalAccount";
+import deleteExternalAccount from "@salesforce/apex/TsExternalAccountService.deleteExternalAccount";
 
 export default class TsAccCmp extends NavigationMixin(LightningElement) {
     accData = [];
     filteredData = [];
     isSyncedMode = false;
+    isLoading = false;
+    searchValue = "";
 
     _accountsListResult;
 
@@ -25,7 +30,7 @@ export default class TsAccCmp extends NavigationMixin(LightningElement) {
         if (data) {
             const records = data.records?.records || [];
 
-            this.accData = records.map((rec) => {
+            const internalRows = records.map((rec) => {
                 const row = { id: rec.id };
 
                 this.fieldsToShow.forEach((fieldApiName) => {
@@ -39,32 +44,47 @@ export default class TsAccCmp extends NavigationMixin(LightningElement) {
 
                 return row;
             });
-            this.filteredData = this.accData;
+
+            if (this.isSyncedMode) {
+                const externalRows = (this.accData || []).filter((r) => r.Mode === "External");
+                this.accData = [...internalRows, ...externalRows];
+            } else {
+                this.accData = internalRows;
+            }
+
+            this.applySearchFilter();
         } else if (error) {
             this.accData = [];
+            this.applySearchFilter();
         }
     }
-
 
     async handleDeleteFromTable(event) {
         const recordIdToDelete = event.detail?.recordIdToDelete;
         if (!recordIdToDelete) return;
 
+        const row = (this.accData || []).find((r) => r.id === recordIdToDelete);
+        if (!row) return;
+
         event.stopPropagation();
+
+        if (row.Mode === "External") {
+            try {
+                await deleteExternalAccount({ recordId: recordIdToDelete });
+                this.accData = (this.accData || []).filter((r) => r.id !== recordIdToDelete);
+                this.applySearchFilter();
+                this.showToast("Delete successful", "External record deleted successfully.", "success", "dismissable");
+            } catch (e) {
+                const message = e?.body?.message || e?.message || "External record cannot be deleted.";
+                this.showToast("Delete failed", message, "warning", "sticky");
+            }
+            return;
+        }
 
         try {
             await deleteRecord(recordIdToDelete);
-            this.accData = this.accData.filter(
-                (row) => row.id !== recordIdToDelete
-            );
-            this.dispatchEvent(
-                new ShowToastEvent({
-                    title: "Delete successful",
-                    message: "Record deleted successfully.",
-                    variant: "success",
-                    mode: "dismissable"
-                })
-            );
+            await refreshApex(this._accountsListResult);
+            this.showToast("Delete successful", "Record deleted successfully.", "success", "dismissable");
         } catch (e) {
             const errors = e?.body?.output?.errors;
             const message =
@@ -72,14 +92,7 @@ export default class TsAccCmp extends NavigationMixin(LightningElement) {
                     ? errors[0].message
                     : "Record cannot be deleted.";
 
-            this.dispatchEvent(
-                new ShowToastEvent({
-                    title: "Delete failed",
-                    message: message,
-                    variant: "warning",
-                    mode: "sticky"
-                })
-            );
+            this.showToast("Delete failed", message, "warning", "sticky");
         }
     }
 
@@ -93,26 +106,14 @@ export default class TsAccCmp extends NavigationMixin(LightningElement) {
         if (result?.status === "success") {
             await refreshApex(this._accountsListResult);
 
-            this.dispatchEvent(
-                new ShowToastEvent({
-                    title: "Create successful",
-                    message: "Record created successfully.",
-                    variant: "success",
-                    mode: "dismissable"
-                })
-            );
+            this.showToast("Create successful", "Record created successfully.", "success", "dismissable");
+
             return;
         }
 
         if (result?.status === "error") {
-            this.dispatchEvent(
-                new ShowToastEvent({
-                    title: "Create failed",
-                    message: result?.message || "Record cannot be created.",
-                    variant: "warning",
-                    mode: "sticky"
-                })
-            );
+            this.showToast("Create failed", result?.message || "Record cannot be created.", "warning", "sticky");
+
         }
     }
 
@@ -122,20 +123,35 @@ export default class TsAccCmp extends NavigationMixin(LightningElement) {
 
         if (!recordId || !fields || Object.keys(fields).length === 0) return;
 
+        const row = (this.accData || []).find((r) => r.id === recordId);
+        if (!row) return;
+
         event.stopPropagation();
+
+        if (row.Mode === "External") {
+            try {
+                const updated = await updateExternalAccount({ recordId, fields });
+
+                this.accData = this.accData.map((r) =>
+                    r.id === recordId
+                        ? { ...r, ...updated, Mode: "External" }
+                        : r
+                );
+                this.applySearchFilter();
+
+                this.showToast("Save successful", "External record updated successfully.", "success", "dismissable");
+            } catch (e) {
+                const message = e?.body?.message || e?.message || "External record cannot be updated.";
+                this.showToast("Save failed", message, "warning", "sticky");
+            }
+            return;
+        }
 
         try {
             await updateRecord({ fields: { Id: recordId, ...fields } });
             await refreshApex(this._accountsListResult);
 
-            this.dispatchEvent(
-                new ShowToastEvent({
-                    title: "Save successful",
-                    message: "Record updated successfully.",
-                    variant: "success",
-                    mode: "dismissable"
-                })
-            );
+            this.showToast("Save successful", "Record updated successfully.", "success", "dismissable");
         } catch (e) {
             const out = e?.body?.output;
             const message =
@@ -144,31 +160,92 @@ export default class TsAccCmp extends NavigationMixin(LightningElement) {
                 e?.body?.message ||
                 "Record cannot be updated.";
 
-            this.dispatchEvent(
-                new ShowToastEvent({
-                    title: "Save failed",
-                    message,
-                    variant: "warning",
-                    mode: "sticky"
-                })
-            );
+            this.showToast("Save failed", message, "warning", "sticky");
         }
     }
 
-    handleSearch(event) {
-        const searchValue = event.detail?.searchValue?.toLowerCase() ?? "";
 
-        if (!searchValue) {
+    handleSearch(event) {
+        this.searchValue = event.detail?.searchValue?.toLowerCase() ?? "";
+
+        if (!this.searchValue) {
             this.filteredData = this.accData;
             return;
         }
 
-        this.filteredData = this.accData.filter((row) =>
-            (row.Name ?? "").toLowerCase().includes(searchValue)
+        this.filteredData = (this.accData || []).filter((row) =>
+            (row.Name ?? "").toLowerCase().includes(this.searchValue)
         );
     }
 
-    handleSyncedModeChange(event) {
+    applySearchFilter() {
+        if (!this.searchValue) {
+            this.filteredData = this.accData;
+            return;
+        }
+
+        this.filteredData = (this.accData || []).filter((row) =>
+            (row.Name ?? "").toLowerCase().includes(this.searchValue)
+        );
+    }
+
+
+    async handleSyncedModeChange(event) {
         this.isSyncedMode = event.detail?.isSyncedMode ?? false;
+
+        if (!this.isSyncedMode) {
+            this.accData = (this.accData || []).filter((r) => r.Mode !== "External");
+            this.applySearchFilter();
+            await refreshApex(this._accountsListResult);
+            return;
+        }
+
+        this.isLoading = true;
+
+        try {
+            const ext = (await getExternalAccounts()) || [];
+            const externalRows = ext.map((rec) => {
+                const row = { id: rec.id };
+
+                this.fieldsToShow.forEach((f) => {
+                    row[f] = rec?.[f] ?? "";
+                });
+
+                row.Mode = "External";
+                return row;
+            });
+
+            const internalRows = (this.accData || []).filter((r) => r.Mode !== "External");
+            this.accData = [...internalRows, ...externalRows];
+            this.applySearchFilter();
+            this.showToast(
+                "External records loaded",
+                `${externalRows.length} records loaded from external org.`,
+                "success",
+                "dismissable"
+            );
+
+        } catch (e) {
+            const message = e?.body?.message || e?.message || "External data cannot be loaded.";
+            this.showToast(
+                "External load failed",
+                message,
+                "warning",
+                "sticky"
+            );
+        } finally {
+            this.isLoading = false;
+        }
+    }
+
+    showToast(title, message, variant, mode) {
+        this.dispatchEvent(
+            new ShowToastEvent({
+                title,
+                message,
+                variant,
+                mode
+            })
+        );
     }
 }

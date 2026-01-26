@@ -1,44 +1,48 @@
 <template>
-  <header>
-    <c-ts-header-cmp title={title}></c-ts-header-cmp>
-  </header>
-  <article class="slds-var-p-around_medium">
-    <section class="slds-grid slds-wrap slds-var-m-bottom_medium slds-gutters">
-      <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
-        <lightning-input
-          type="search"
-          label="Search by name"
-          value={searchValue}
-          onchange={handleSearchChange}
-        >
-        </lightning-input>
-      </div>
-      <div
-        class="slds-col slds-size_1-of-1 slds-medium-size_1-of-4 slds-var-m-top_large"
+  <div class={getBgC}>
+    <header>
+      <c-ts-header-cmp title={title}></c-ts-header-cmp>
+    </header>
+    <article class="slds-var-p-around_medium">
+      <section
+        class="slds-grid slds-wrap slds-var-m-bottom_medium slds-gutters"
       >
-        <lightning-button
-          label="Search"
-          variant="brand"
-          onclick={handleSearchClick}
-          disabled={isSearchDisabled}
-        ></lightning-button>
-      </div>
-      <div
-        class="slds-col slds-size_1-of-1 slds-medium-size_1-of-4 slds-var-m-top_large slds-col_bump-left"
-      >
-        <div class="slds-form-element slds-float_right">
+        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
           <lightning-input
-            type="toggle"
-            label="Sync"
-            checked={isSynced}
-            onchange={handleToggleChange}
+            type="search"
+            label="Search by name"
+            value={searchValue}
+            onchange={handleSearchChange}
           >
           </lightning-input>
         </div>
-      </div>
-    </section>
-    <section>
-      <c-ts-table-cmp obj-data={objData} obj-name={objName}> </c-ts-table-cmp>
-    </section>
-  </article>
+        <div
+          class="slds-col slds-size_1-of-1 slds-medium-size_1-of-4 slds-var-m-top_large"
+        >
+          <lightning-button
+            label="Search"
+            variant="brand"
+            onclick={handleSearchClick}
+            disabled={isSearchDisabled}
+          ></lightning-button>
+        </div>
+        <div
+          class="slds-col slds-size_1-of-1 slds-medium-size_1-of-4 slds-var-m-top_large slds-col_bump-left"
+        >
+          <div class="slds-form-element slds-float_right">
+            <lightning-input
+              type="toggle"
+              label="Sync"
+              checked={isSynced}
+              onchange={handleToggleChange}
+            >
+            </lightning-input>
+          </div>
+        </div>
+      </section>
+      <section>
+        <c-ts-table-cmp obj-data={objData} obj-name={objName}> </c-ts-table-cmp>
+      </section>
+    </article>
+  </div>
 </template>
