@@ -5,7 +5,7 @@ public with sharing class IntegrationHelper {
     if (orgHost.contains('orgfarm')) {
       return 'saleNC';
     } else {
-      return 'marketingOrgEC';
+      return 'marketingOrgNC';
     }
   }
 }
