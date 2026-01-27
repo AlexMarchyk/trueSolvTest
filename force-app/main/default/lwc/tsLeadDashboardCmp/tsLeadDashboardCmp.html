@@ -1,0 +1,55 @@
+<template>
+  <div class="slds-grid slds-wrap slds-gutters">
+    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2">
+      <section class="slds-card">
+        <div class="slds-card__header slds-grid">
+          <header class="slds-media slds-media_center slds-has-flexi-truncate">
+            <div class="slds-media__body">
+              <h2 class="slds-card__header-title">
+                <span>All leads (internal + external)</span>
+              </h2>
+            </div>
+          </header>
+        </div>
+        <div class="slds-card__body slds-card__body_inner">
+          <div class="slds-text-heading_large">{totalCount}</div>
+          <div class="slds-text-body_small">Total</div>
+        </div>
+      </section>
+    </div>
+
+    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2">
+      <section class="slds-card">
+        <div class="slds-card__header slds-grid">
+          <header class="slds-media slds-media_center slds-has-flexi-truncate">
+            <div class="slds-media__body">
+              <h2 class="slds-card__header-title">
+                <span>Closed - Converted</span>
+              </h2>
+            </div>
+          </header>
+        </div>
+        <div class="slds-card__body slds-card__body_inner">
+          <div class="slds-text-heading_large">{convertedCount}</div>
+          <div class="slds-text-body_small">
+            {convertedPercent}% of all leads
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <template if:true={isLoading}>
+      <div class="slds-col slds-size_1-of-1 slds-var-m-top_medium">
+        <div class="slds-is-relative">
+          <lightning-spinner alternative-text="Loading" size="medium"></lightning-spinner>
+        </div>
+      </div>
+    </template>
+
+    <template if:true={errorMessage}>
+      <div class="slds-col slds-size_1-of-1 slds-var-m-top_medium">
+        <div class="slds-text-color_error">{errorMessage}</div>
+      </div>
+    </template>
+  </div>
+</template>

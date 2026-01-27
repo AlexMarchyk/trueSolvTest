@@ -1,24 +1,26 @@
-public with sharing class TsExternalAccountService {
+public with sharing class TsExternalLeadService {
     public static final String NC_NAME = IntegrationHelper.getCorrectNC();
 
-    public class TsExternalAccountRow {
+    public class TsExternalLeadRow {
         @AuraEnabled public String id;
-        @AuraEnabled public String Name;
+        @AuraEnabled public String FirstName;
+        @AuraEnabled public String LastName;
+        @AuraEnabled public String Company;
+        @AuraEnabled public String Email;
         @AuraEnabled public String Phone;
-        @AuraEnabled public Integer NumberOfEmployees;
+        @AuraEnabled public String Status;
     }
 
     @AuraEnabled(cacheable=true)
-    public static List<TsExternalAccountRow> getExternalAccounts() {
-
+    public static List<TsExternalLeadRow> getExternalLeads() {
         HttpRequest req = new HttpRequest();
         req.setMethod('GET');
-        req.setEndpoint('callout:' + NC_NAME + '/services/apexrest/Account');
+        req.setEndpoint('callout:'+ NC_NAME +'/services/apexrest/Lead');
 
         HttpResponse res = send(req);
         List<Object> items = toList(JSON.deserializeUntyped(res.getBody()));
 
-        List<TsExternalAccountRow> out = new List<TsExternalAccountRow>();
+        List<TsExternalLeadRow> out = new List<TsExternalLeadRow>();
         for (Object o : items) {
             out.add(mapRow((Map<String, Object>)o));
         }
@@ -26,14 +28,14 @@ public with sharing class TsExternalAccountService {
     }
 
     @AuraEnabled
-    public static TsExternalAccountRow updateExternalAccount(String recordId, Map<String, Object> fields) {
+    public static TsExternalLeadRow updateExternalLead(String recordId, Map<String, Object> fields) {
         if (String.isBlank(recordId)) {
             throw new AuraHandledException('Missing record id');
         }
 
         HttpRequest req = new HttpRequest();
         req.setMethod('PATCH');
-        req.setEndpoint('callout:' + NC_NAME +'/services/apexrest/Account/' + recordId);
+        req.setEndpoint('callout:'+ NC_NAME +'/services/apexrest/Lead/' + recordId);
         req.setHeader('Content-Type', 'application/json');
         req.setBody(JSON.serialize(fields == null ? new Map<String, Object>() : fields));
 
@@ -41,7 +43,20 @@ public with sharing class TsExternalAccountService {
         return mapRow((Map<String, Object>)JSON.deserializeUntyped(res.getBody()));
     }
 
-     private static HttpResponse send(HttpRequest req) {
+    @AuraEnabled
+    public static void deleteExternalLead(String recordId) {
+        if (String.isBlank(recordId)) {
+            throw new AuraHandledException('Missing record id');
+        }
+
+        HttpRequest req = new HttpRequest();
+        req.setMethod('DELETE');
+        req.setEndpoint('callout:'+ NC_NAME +'/services/apexrest/Lead/' + recordId);
+
+        send(req);
+    }
+
+    private static HttpResponse send(HttpRequest req) {
         Http http = new Http();
         HttpResponse res = http.send(req);
 
@@ -72,26 +87,15 @@ public with sharing class TsExternalAccountService {
         return res;
     }
 
-    @AuraEnabled
-    public static void deleteExternalAccount(String recordId) {
-        if (String.isBlank(recordId)) {
-            throw new AuraHandledException('Missing record id');
-        }
-
-        HttpRequest req = new HttpRequest();
-        req.setMethod('DELETE');
-        req.setEndpoint('callout:'+ NC_NAME +'/services/apexrest/Account/' + recordId);
-
-        send(req);
-    }
-
-    private static TsExternalAccountRow mapRow(Map<String, Object> m) {
-        TsExternalAccountRow row = new TsExternalAccountRow();
+    private static TsExternalLeadRow mapRow(Map<String, Object> m) {
+        TsExternalLeadRow row = new TsExternalLeadRow();
         row.id = (String)m.get('Id');
-        row.Name = (String)m.get('Name');
+        row.FirstName = (String)m.get('FirstName');
+        row.LastName = (String)m.get('LastName');
+        row.Company = (String)m.get('Company');
+        row.Email = (String)m.get('Email');
         row.Phone = (String)m.get('Phone');
-        Object noe = m.get('NumberOfEmployees');
-        row.NumberOfEmployees = (noe == null) ? null : Integer.valueOf(String.valueOf(noe));
+        row.Status = (String)m.get('Status');
         return row;
     }
 

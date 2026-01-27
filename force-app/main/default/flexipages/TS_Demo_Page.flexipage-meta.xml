@@ -11,10 +11,28 @@
                 <identifier>c_tsAccCmp</identifier>
             </componentInstance>
         </itemInstances>
+        <itemInstances>
+            <componentInstance>
+                <componentName>tsLeadDashboardCmp</componentName>
+                <identifier>c_tsLeadDashboardCmp</identifier>
+            </componentInstance>
+        </itemInstances>
         <name>region2</name>
         <type>Region</type>
     </flexiPageRegions>
     <flexiPageRegions>
+        <itemInstances>
+            <componentInstance>
+                <componentName>tsLeadCmp</componentName>
+                <identifier>c_tsLeadCmp</identifier>
+            </componentInstance>
+        </itemInstances>
+        <itemInstances>
+            <componentInstance>
+                <componentName>tsOpportunityDashboardCmp</componentName>
+                <identifier>c_tsOpportunityDashboardCmp</identifier>
+            </componentInstance>
+        </itemInstances>
         <name>region3</name>
         <type>Region</type>
     </flexiPageRegions>
