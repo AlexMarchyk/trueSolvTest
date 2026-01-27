@@ -1,18 +1,87 @@
-# Salesforce DX Project: Next Steps
+flowchart LR
+  subgraph A["Org A (Sales)"]
+    direction TB
 
-Now that you’ve created a Salesforce DX project, what’s next? Here are some documentation resources to get you started.
+    subgraph A_UI["LWC UI"]
+      A_Acc["tsAccCmp (container)\nInternal: getListUi + UI API CRUD\nExternal: TsExternalAccountService\nPE: toast + Accept"]
+      A_Lead["tsLeadCmp (container)\nInternal: LeadController + UI API CRUD\nExternal: TsExternalLeadService\nPE: toast + Accept"]
 
-## How Do You Plan to Deploy Your Changes?
+      A_Main["tsMainCmp (layout)\nSearch + Sync toggle + Accept"]
+      A_Table["tsTableCmp (universal)"]
+      A_Modal["tsCreateModalCmp"]
+      A_EVT["tsEventListenerCmp\nsubscribe /event/Ts_DataChange__e\n(active when Sync=true)"]
 
-Do you want to deploy a set of changes, or create a self-contained application? Choose a [development model](https://developer.salesforce.com/tools/vscode/en/user-guide/development-models).
+      A_Acc --> A_Main --> A_Table
+      A_Lead --> A_Main
+      A_Acc --> A_Modal
+      A_Lead --> A_Modal
+      A_EVT --> A_Acc
+      A_EVT --> A_Lead
 
-## Configure Your Salesforce DX Project
+      A_DashLead["tsLeadDashboardCmp (KPI LWC)\ninternal + external merge"]
+      A_DashOpp["tsOpportunityDashboardCmp (KPI LWC)\ninternal + external merge"]
+    end
 
-The `sfdx-project.json` file contains useful configuration information for your project. See [Salesforce DX Project Configuration](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_ws_config.htm) in the _Salesforce DX Developer Guide_ for details about this file.
+    subgraph A_APEX["Apex (A)"]
+      A_LC["LeadController.getAllLeads()"]
+      A_SvcAcc["TsExternalAccountService\nGET/PATCH/DELETE via Named Credential"]
+      A_SvcLead["TsExternalLeadService\nGET/PATCH/DELETE via Named Credential"]
+    end
 
-## Read All About It
+    A_Lead --> A_LC
+    A_DashLead --> A_LC
+    A_DashLead --> A_SvcLead
+    A_Acc --> A_SvcAcc
+    A_Lead --> A_SvcLead
+  end
 
-- [Salesforce Extensions Documentation](https://developer.salesforce.com/tools/vscode/)
-- [Salesforce CLI Setup Guide](https://developer.salesforce.com/docs/atlas.en-us.sfdx_setup.meta/sfdx_setup/sfdx_setup_intro.htm)
-- [Salesforce DX Developer Guide](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_intro.htm)
-- [Salesforce CLI Command Reference](https://developer.salesforce.com/docs/atlas.en-us.sfdx_cli_reference.meta/sfdx_cli_reference/cli_reference.htm)
+  subgraph B["Org B (Marketing)"]
+    direction TB
+
+    subgraph B_UI["LWC UI"]
+      B_Acc["tsAccCmp (container)"]
+      B_Lead["tsLeadCmp (container)"]
+      B_Main["tsMainCmp (layout)\nSearch + Sync toggle + Accept"]
+      B_Table["tsTableCmp (universal)"]
+      B_Modal["tsCreateModalCmp"]
+      B_EVT["tsEventListenerCmp\nsubscribe /event/Ts_DataChange__e"]
+
+      B_Acc --> B_Main --> B_Table
+      B_Lead --> B_Main
+      B_Acc --> B_Modal
+      B_Lead --> B_Modal
+      B_EVT --> B_Acc
+      B_EVT --> B_Lead
+
+      B_DashLead["tsLeadDashboardCmp (KPI LWC)\ninternal + external merge"]
+      B_DashOpp["tsOpportunityDashboardCmp (KPI LWC)\ninternal + external merge"]
+    end
+
+    subgraph B_APEX["Apex (B)"]
+      B_LC["LeadController.getAllLeads()"]
+      B_SvcAcc["TsExternalAccountService\nGET/PATCH/DELETE via Named Credential"]
+      B_SvcLead["TsExternalLeadService\nGET/PATCH/DELETE via Named Credential"]
+    end
+
+    subgraph B_REST["Apex REST (B endpoints)"]
+      B_RAcc["TsExternalAccountRest\n/services/apexrest/Account/*\nDML + publish Ts_DataChange__e"]
+      B_RLead["TsExternalLeadRest\n/services/apexrest/Lead/*\nDML + publish Ts_DataChange__e"]
+    end
+
+    B_Lead --> B_LC
+    B_DashLead --> B_LC
+    B_DashLead --> B_SvcLead
+    B_Acc --> B_SvcAcc
+    B_Lead --> B_SvcLead
+  end
+
+  NC["Named Credentials\nsaleNC / marketingOrgNC"]
+
+  A_SvcAcc -->|HTTP callout| NC --> B_RAcc
+  A_SvcLead -->|HTTP callout| NC --> B_RLead
+
+  B_SvcAcc -->|HTTP callout| NC --> A
+  B_SvcLead -->|HTTP callout| NC --> A
+
+  B_RAcc -->|publish PE| B_EVT
+  B_RLead -->|publish PE| B_EVT
