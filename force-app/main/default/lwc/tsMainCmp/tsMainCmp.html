@@ -7,6 +7,17 @@
       <section
         class="slds-grid slds-wrap slds-var-m-bottom_medium slds-gutters"
       >
+        <template if:true={hasPendingEvent}>
+          <div class="slds-notify slds-notify_alert slds-theme_warning">
+            <span>{pendingMessage}</span>
+            <lightning-button
+              label="Accept"
+              variant="brand"
+              onclick={handleAccept}
+              class="slds-m-left_medium"
+            ></lightning-button>
+          </div>
+        </template>
         <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
           <lightning-input
             type="search"

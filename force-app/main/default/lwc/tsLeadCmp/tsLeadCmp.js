@@ -14,11 +14,13 @@ export default class TsLeadCmp extends LightningElement {
     isSyncedMode = false;
     isLoading = false;
     searchValue = "";
-
-    _leadsResult;
-
+    pendingEvent = null;
+    pendingMessage = "";
+    hasPendingEvent = false;
     objName = "Lead";
     fieldsToShow = ["FirstName", "LastName", "Company", "Phone"];
+
+    _leadsResult;
 
     @wire(getAllLeads)
     wired(result) {
@@ -155,8 +157,9 @@ export default class TsLeadCmp extends LightningElement {
         }
 
         this.filteredData = (this.leadData || []).filter((row) =>
-            (row.Name ?? "").toLowerCase().includes(this.searchValue)
+            `${row.FirstName ?? ""} ${row.LastName ?? ""}`.toLowerCase().includes(this.searchValue)
         );
+
     }
 
     applySearchFilter() {
@@ -166,7 +169,7 @@ export default class TsLeadCmp extends LightningElement {
         }
 
         this.filteredData = (this.leadData || []).filter((row) =>
-            (row.Name ?? "").toLowerCase().includes(this.searchValue)
+            `${row.FirstName ?? ""} ${row.LastName ?? ""}`.toLowerCase().includes(this.searchValue)
         );
     }
 
@@ -223,4 +226,65 @@ export default class TsLeadCmp extends LightningElement {
             })
         );
     }
+
+    handleDataChange(event) {
+        const payload = event.detail?.payload;
+        if (!payload) return;
+
+        this.pendingEvent = payload;
+        this.hasPendingEvent = true;
+
+        const fields = payload.Fields__c;
+        const firstName = fields?.FirstName ?? fields?.['FirstName'] ?? '';
+        const lastName = fields?.LastName ?? fields?.['LastName'] ?? '';
+        const recName = payload.RecordName__c || `${firstName} ${lastName}`.trim();
+        const op = payload.Operation__c || '';
+
+        this.pendingMessage =
+            `Record${recName ? ` "${recName}"` : ''} was ${op.toLowerCase()} in external org. ` +
+            `To apply changes, click Accept.`;
+
+        this.showToast(
+            "External change received",
+            this.pendingMessage,
+            "info",
+            "dismissable"
+        );
+    }
+
+    async handleAccept() {
+        if (!this.pendingEvent) return;
+
+        const op = this.pendingEvent.Operation__c;
+        const recordId = this.pendingEvent.RecordId__c;
+        const fieldsPayload = this.pendingEvent.Fields__c || {};
+
+        try {
+            if (op === "DELETE") {
+                this.leadData = (this.leadData || []).filter((r) => r.id !== recordId);
+                this.applySearchFilter();
+                this.showToast("Applied", "Record removed from table.", "success", "dismissable");
+            }
+
+            if (op === "UPDATE") {
+                const fields = {};
+                this.fieldsToShow.forEach((f) => {
+                    if (fieldsPayload[f] !== undefined) fields[f] = fieldsPayload[f];
+                });
+
+                await updateRecord({ fields: { Id: recordId, ...fields } });
+                await refreshApex(this._leadsResult);
+
+                this.showToast("Applied", "Record updated from external org.", "success", "dismissable");
+            }
+
+            this.hasPendingEvent = false;
+            this.pendingEvent = null;
+            this.pendingMessage = "";
+        } catch (e) {
+            const message = e?.body?.message || e?.message || "Cannot apply external change.";
+            this.showToast("Apply failed", message, "warning", "sticky");
+        }
+    }
+
 }

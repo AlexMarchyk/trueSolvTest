@@ -3,6 +3,8 @@ import { LightningElement, api } from 'lwc';
 export default class TsMainCmp extends LightningElement {
     @api objName;
     @api objData;
+    @api hasPendingEvent = false;
+    @api pendingMessage = "";
 
     searchValue = "";
     isSynced = false;
@@ -64,5 +66,14 @@ export default class TsMainCmp extends LightningElement {
             default:
                 return "slds-theme_default";
         }
+    }
+
+    handleAccept() {
+        this.dispatchEvent(
+            new CustomEvent('accept', {
+                bubbles: true,
+                composed: true
+            })
+        );
     }
 }

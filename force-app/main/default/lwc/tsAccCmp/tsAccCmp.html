@@ -1,7 +1,12 @@
 <template>
+  <c-ts-event-listener-cmp obj-name={objName} ondatachange={handleDataChange}>
+  </c-ts-event-listener-cmp>
   <c-ts-main-cmp
     obj-name={objName}
     obj-data={filteredData}
+    has-pending-event={hasPendingEvent}
+    pending-message={pendingMessage}
+    onaccept={handleAccept}
     ondeletefromtable={handleDeleteFromTable}
     oncreatefromtable={handleCreateFromTable}
     onsavefromtable={handleSaveFromTable}

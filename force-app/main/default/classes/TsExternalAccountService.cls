@@ -8,7 +8,7 @@ public with sharing class TsExternalAccountService {
         @AuraEnabled public Integer NumberOfEmployees;
     }
 
-    @AuraEnabled(cacheable=true)
+    @AuraEnabled()
     public static List<TsExternalAccountRow> getExternalAccounts() {
 
         HttpRequest req = new HttpRequest();

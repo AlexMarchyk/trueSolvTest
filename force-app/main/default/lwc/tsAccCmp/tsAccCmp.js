@@ -15,12 +15,14 @@ export default class TsAccCmp extends NavigationMixin(LightningElement) {
     isSyncedMode = false;
     isLoading = false;
     searchValue = "";
-
-    _accountsListResult;
-
+    pendingEvent = null;
+    pendingMessage = "";
+    hasPendingEvent = false;
     objName = "Account";
     listViewApiName = "AllAccounts";
     fieldsToShow = ["Name", "Phone", "NumberOfEmployees"];
+
+    _accountsListResult;
 
     @wire(getListUi, { objectApiName: "$objName", listViewApiName: "$listViewApiName" })
     wired(result) {
@@ -247,5 +249,65 @@ export default class TsAccCmp extends NavigationMixin(LightningElement) {
                 mode
             })
         );
+    }
+
+    handleDataChange(event) {
+        const payload = event.detail?.payload;
+        if (!payload) return;
+
+        this.pendingEvent = payload;
+        this.hasPendingEvent = true;
+
+        const fields = payload.Fields__c;
+        const nameFromFields = fields && (fields.Name || fields['Name']) ? (fields.Name || fields['Name']) : '';
+        const recName = payload.RecordName__c || nameFromFields || '';
+        const op = payload.Operation__c || '';
+
+        this.pendingMessage =
+            `Record${recName ? ` "${recName}"` : ''} was ${op.toLowerCase()} in external org. ` +
+            `To apply changes, click Accept.`;
+
+        this.showToast(
+            "External change received",
+            this.pendingMessage,
+            "info",
+            "dismissable"
+        );
+    }
+
+    async handleAccept() {
+        if (!this.pendingEvent) return;
+
+        const op = this.pendingEvent.Operation__c;
+        const recordId = this.pendingEvent.RecordId__c;
+        const fieldsPayload = this.pendingEvent.Fields__c || {};
+
+        try {
+            if (op === "DELETE") {
+                this.accData = (this.accData || []).filter((r) => r.id !== recordId);
+                this.applySearchFilter();
+
+                this.showToast("Applied", "Record removed from table.", "success", "dismissable");
+            }
+
+            if (op === "UPDATE") {
+                const fields = {};
+                this.fieldsToShow.forEach((f) => {
+                    if (fieldsPayload[f] !== undefined) fields[f] = fieldsPayload[f];
+                });
+
+                await updateRecord({ fields: { Id: recordId, ...fields } });
+                await refreshApex(this._accountsListResult);
+
+                this.showToast("Applied", "Record updated from external org.", "success", "dismissable");
+            }
+
+            this.hasPendingEvent = false;
+            this.pendingEvent = null;
+            this.pendingMessage = "";
+        } catch (e) {
+            const message = e?.body?.message || e?.message || "Cannot apply external change.";
+            this.showToast("Apply failed", message, "warning", "sticky");
+        }
     }
 }

@@ -11,7 +11,7 @@ public with sharing class TsExternalLeadService {
         @AuraEnabled public String Status;
     }
 
-    @AuraEnabled(cacheable=true)
+    @AuraEnabled()
     public static List<TsExternalLeadRow> getExternalLeads() {
         HttpRequest req = new HttpRequest();
         req.setMethod('GET');

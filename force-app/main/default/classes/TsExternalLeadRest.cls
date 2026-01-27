@@ -1,5 +1,20 @@
 @RestResource(urlMapping='/Lead/*')
 global with sharing class TsExternalLeadRest {
+
+    private static void publishDataChange(String operation, String recordId) {
+        List<Ts_DataChange__e> eventsToPublish = new List<Ts_DataChange__e>();
+        eventsToPublish.add(
+            new Ts_DataChange__e(
+                SourceOrgHost__c = URL.getOrgDomainUrl().getHost(),
+                TargetOrgHost__c = null,
+                ObjectApiName__c = 'Lead',
+                Operation__c = operation,
+                RecordId__c = recordId
+            )
+        );
+        EventBus.publish(eventsToPublish);
+    }
+
     @HttpGet
     global static List<Lead> getLeads() {
         if (!Schema.sObjectType.Lead.isAccessible()) {
@@ -32,7 +47,9 @@ global with sharing class TsExternalLeadRest {
             return null;
         }
 
-        Map<String, Object> fields = (Map<String, Object>)JSON.deserializeUntyped(RestContext.request.requestBody.toString());
+        Map<String, Object> fields =
+            (Map<String, Object>)JSON.deserializeUntyped(RestContext.request.requestBody.toString());
+
         Lead l = [
             SELECT Id, FirstName, LastName, Company, Email, Phone
             FROM Lead
@@ -56,6 +73,8 @@ global with sharing class TsExternalLeadRest {
             return null;
         }
 
+        publishDataChange('UPDATE', recordId);
+
         return l;
     }
 
@@ -77,6 +96,9 @@ global with sharing class TsExternalLeadRest {
 
         try {
             delete [SELECT Id FROM Lead WHERE Id = :recordId LIMIT 1];
+
+            publishDataChange('DELETE', recordId);
+
             RestContext.response.statusCode = 204;
         } catch (DmlException ex) {
             RestContext.response.statusCode = 400;
