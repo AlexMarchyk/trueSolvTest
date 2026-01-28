@@ -4,4 +4,7 @@ Diagram
 
 Internal Mode
 ![til](https://github.com//AlexMarchyk/trueSolvTest/blob/main/internalMode.gif)
+GitHub supports GIFs in READMEs. Here's an example, using Markdown, that I tested on a GitHub repository.
+
+![hippo](https://github.com//AlexMarchyk/trueSolvTest/blob/main/internalMode.gif)
 
