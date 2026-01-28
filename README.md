@@ -3,4 +3,5 @@ Diagram
 
 
 Internal Mode
-![Image alt](https://github.com//AlexMarchyk/trueSolvTest/blob/main/internalMode.gif)
+![til](https://github.com//AlexMarchyk/trueSolvTest/blob/main/internalMode.gif)
+
