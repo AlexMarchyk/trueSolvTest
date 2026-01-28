@@ -5,3 +5,7 @@
 ### Internal Mode
 
 [▶️ View animation (GIF)](https://github.com/AlexMarchyk/trueSolvTest/blob/main/internalMode.gif)
+
+### Externa Mode. A sales user makes changes in the Sales Org, the changes are reflected in the Marketing Org 
+[▶️ View animation (GIF)](https://github.com/AlexMarchyk/trueSolvTest/blob/main/externalModeV1.gif)
+
